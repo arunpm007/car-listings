@@ -66,7 +66,7 @@ Follow [docs/LAUNCH.md](docs/LAUNCH.md): choosing a host, the Supabase dashboard
 
 GitHub Actions in `.github/workflows/`:
 
-- **Checks:** every branch push and pull request. Runs lint, types, tests and a dependency audit, then builds a fresh Supabase from the migrations and does a production build against it.
+- **Checks:** every pull request, and again on each new commit to it. Runs lint, types, tests and a dependency audit, then builds a fresh Supabase from the migrations and does a production build against it.
 - **Deploy:** every push to `main`. Runs the checks, waits for your approval, applies new migrations to the live database, then calls Netlify's build hook to build and publish the site (`netlify.toml` stops Netlify building on every push).
 - **Keep database awake:** a daily ping, so the free Supabase project isn't paused.
 

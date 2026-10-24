@@ -43,14 +43,14 @@ The demo cars in `supabase/seed.sql` only load locally; the hosted database star
 
    The build stops if any of the first four are missing.
 3. Domain: buy one (a `.in` is about ₹700 a year) and point it at the host. HTTPS is automatic.
-4. On Netlify, create a **build hook** for `main` (Project configuration → Build & deploy → Continuous deployment → Build hooks). Keep builds **active**: `netlify.toml` already makes Netlify skip the build on each push, and Netlify always runs a build started by a hook. So only the Deploy workflow puts code live, after the database is updated.
+4. On Netlify, create a **build hook** for `main` (Project configuration → Developer settings → Continuous deployment → Build hooks). Keep builds **active**: `netlify.toml` already makes Netlify skip the build on each push, and Netlify always runs a build started by a hook. So only the Deploy workflow puts code live, after the database is updated.
 5. Open Admin → Settings: business name, phone, WhatsApp, hours.
 
 ## 4. CI/CD (you, once)
 
 Already in `.github/workflows/`:
 
-- **Checks** (`ci.yml`), on every branch push and pull request:
+- **Checks** (`ci.yml`), on every pull request (and each new commit to it):
   - lint, types, unit tests, dependency audit;
   - a fresh Supabase built from the migrations;
   - a production build against it.
@@ -66,7 +66,7 @@ In GitHub → Settings:
 
 - **Environments** → new environment `production`:
   - Required reviewers: yourself, so nothing goes live without a click.
-  - Secrets: `SUPABASE_ACCESS_TOKEN` (supabase.com → Account → Access tokens) and `NETLIFY_BUILD_HOOK_URL` (the hook from step 3.4; secret, because anyone with it can start builds).
+  - Secrets: `SUPABASE_ACCESS_TOKEN` (supabase.com → Account → Access tokens: scoped to this one project, **Read** on Project Settings, API Keys and API Key Secrets, nothing else), `SUPABASE_DB_PASSWORD` (the migrations run with it), and `NETLIFY_BUILD_HOOK_URL` (the hook from step 3.4; secret, because anyone with it can start builds).
 - **Secrets and variables → Actions → Variables** (repository level; none of these are secret):
   - `SUPABASE_PROJECT_REF`. Until it is set, Deploy only runs the checks.
   - `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`, for the keep-alive.
