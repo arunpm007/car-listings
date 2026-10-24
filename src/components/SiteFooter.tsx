@@ -76,6 +76,10 @@ export async function SiteFooter() {
         <div className="mt-12 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-6 text-xs text-white/40">
           <p>Cars are listed on behalf of their owners. Please inspect the car and its papers before you pay.</p>
           <p>
+            <Link href="/privacy" className="hover:text-white">
+              Privacy
+            </Link>
+            {" · "}
             <Link href="/credits" className="hover:text-white">
               Photo credits
             </Link>

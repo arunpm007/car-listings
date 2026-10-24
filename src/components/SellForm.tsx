@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { CheckCircle2, ImagePlus, Loader2, Lock, MessageCircle, X } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import clsx from "clsx";
@@ -276,7 +277,10 @@ export function SellForm({ brands, models }: { brands: Brand[]; models: Model[] 
         <Lock className="mt-0.5 size-4 shrink-0" aria-hidden />
         <span>
           When we list your car, we&apos;ll check the RC and insurance in person, and with your OK keep a copy to verify the sale.
-          Copies are private, never shown on the website, and deleted 30 days after the car is sold.
+          Copies are private, never shown on the website, and deleted 30 days after the car is sold.{" "}
+          <Link href="/privacy" className="font-medium text-foreground underline underline-offset-2">
+            How we handle your details
+          </Link>
         </span>
       </p>
 

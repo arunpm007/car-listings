@@ -4,7 +4,15 @@ import { headers } from "next/headers";
 import { createServiceClient } from "./supabase/service";
 
 /**
- * The visitor's address, salted and hashed so it can be stored without keeping the address.
+ * A salted one-way code for a phone number, email or address: the same input always gives the
+ * same code, so it can be counted, but the code can't be turned back into the input.
+ */
+export function scramble(value: string) {
+  return createHash("sha256").update(`${value}:${process.env.SUPABASE_SECRET_KEY}`).digest("hex").slice(0, 32);
+}
+
+/**
+ * The visitor's address, scrambled so it can be stored without keeping the address.
  *
  * Only a header the host itself sets can be trusted; anything else a visitor can type in.
  * Set CLIENT_IP_HEADER to the one your host uses (Cloudflare: cf-connecting-ip,
@@ -16,7 +24,7 @@ export async function clientIpHash() {
   const trusted = process.env.CLIENT_IP_HEADER?.toLowerCase();
   const forwarded = h.get("x-forwarded-for")?.split(",").map((s) => s.trim()).filter(Boolean);
   const ip = (trusted ? h.get(trusted) : forwarded?.at(-1)) || "unknown";
-  return createHash("sha256").update(`${ip}:${process.env.SUPABASE_SECRET_KEY}`).digest("hex").slice(0, 32);
+  return scramble(ip);
 }
 
 /** Counts one hit against `bucket`; false once it has had `max` in the last `windowSecs`. */
