@@ -12,6 +12,8 @@ permissions: {}
 
 jobs:
   ping:
+    # Skipped until the variables are set (lesson 5).
+    if: vars.SUPABASE_URL != ''
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
