@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { normalizeIndianPhone } from "@/lib/phone";
-import { DAY, HOUR, clientIpHash, withinLimits } from "@/lib/rate-limit";
+import { DAY, HOUR, clientIpHash, scramble, withinLimits } from "@/lib/rate-limit";
 import { REQUEST_PHOTO_BUCKET } from "@/lib/supabase/env";
 import { createServiceClient } from "@/lib/supabase/service";
 import { FUELS, TRANSMISSIONS } from "@/lib/types";
@@ -75,7 +75,8 @@ export async function startSellRequest(input: SellRequestInput): Promise<StartRe
   const hash = await clientIpHash();
   const allowed = await withinLimits([
     [`sell:ip:${hash}`, PER_IP_PER_HOUR, HOUR],
-    [`sell:phone:${phone}`, PER_PHONE_PER_DAY, DAY],
+    // Scrambled: the limits table never holds a phone number (see the privacy notice).
+    [`sell:phone:${scramble(phone)}`, PER_PHONE_PER_DAY, DAY],
     ["sell:all", ALL_PER_HOUR, HOUR],
   ]);
   if (!allowed) {

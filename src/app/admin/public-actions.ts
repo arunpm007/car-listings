@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { DAY, HOUR, clientIpHash, withinLimits } from "@/lib/rate-limit";
+import { DAY, HOUR, clientIpHash, scramble, withinLimits } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -16,7 +16,7 @@ export async function requestPasswordReset(email: string) {
     parsed.success &&
     (await withinLimits([
       [`reset:ip:${await clientIpHash()}`, 3, HOUR],
-      [`reset:email:${parsed.data.toLowerCase()}`, 3, DAY],
+      [`reset:email:${scramble(parsed.data.toLowerCase())}`, 3, DAY],
       ["reset:all", 10, HOUR],
     ]));
   if (parsed.success && allowed) {

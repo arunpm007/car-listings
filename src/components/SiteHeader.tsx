@@ -8,7 +8,7 @@ import clsx from "clsx";
 import { useSite } from "./SiteProvider";
 import { telHref, whatsappHref } from "@/lib/contact";
 
-const DARK_HERO = ["/", "/cars", "/sold", "/sell", "/contact", "/credits"];
+const DARK_HERO = ["/", "/cars", "/sold", "/sell", "/contact", "/credits", "/privacy"];
 
 const NAV = [
   { href: "/cars", label: "Buy a car" },
