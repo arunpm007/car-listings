@@ -66,7 +66,7 @@ In GitHub → Settings:
 
 - **Environments** → new environment `production`:
   - Required reviewers: yourself, so nothing goes live without a click.
-  - Secrets: `SUPABASE_ACCESS_TOKEN` (supabase.com → Account → Access tokens: scoped to this one project, **Read** on Project Settings, API Keys and API Key Secrets, nothing else), `SUPABASE_DB_PASSWORD` (the migrations run with it), and `NETLIFY_BUILD_HOOK_URL` (the hook from step 3.4; secret, because anyone with it can start builds).
+  - Secrets: `SUPABASE_DB_URL` (Supabase → **Connect** → **Session pooler** connection string, with the database password in place of `[YOUR-PASSWORD]`; GitHub's runners have no IPv6, so the direct address won't work) and `NETLIFY_BUILD_HOOK_URL` (the hook from step 3.4; secret, because anyone with it can start builds).
 - **Secrets and variables → Actions → Variables** (repository level; none of these are secret):
   - `SUPABASE_PROJECT_REF`. Until it is set, Deploy only runs the checks.
   - `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`, for the keep-alive.
