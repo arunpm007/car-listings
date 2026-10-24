@@ -1,0 +1,20 @@
+[
+  {"car": "CAR-0001", "color": "Silver", "file": "File:Maruti Wagon R Front.JPG", "license": "CC BY-SA 4.0", "author": "Ominae"},
+  {"car": "CAR-0001", "file": "File:Maruti Wagon R Rear.JPG", "license": "CC BY-SA 4.0", "author": "Ominae"},
+  {"car": "CAR-0002", "color": "White", "file": "File:SUZUKI SWIFT XR-Limited 2018 Front.jpg", "license": "CC0", "author": "Suzuki-Ham"},
+  {"car": "CAR-0002", "file": "File:SUZUKI SWIFT XR-Limited 2018 Rear.jpg", "license": "CC0", "author": "Suzuki-Ham"},
+  {"car": "CAR-0004", "color": "Blue", "file": "File:2023 Tata Nexon XZA+ front view.jpg", "license": "CC BY-SA 4.0", "author": "Dairokkan9"},
+  {"car": "CAR-0004", "file": "File:2023 Tata Nexon XZA+ rear view.jpg", "license": "CC BY-SA 4.0", "author": "Dairokkan9"},
+  {"car": "CAR-0005", "color": "Black", "file": "File:Mahindra Scorpio GLX 2.6 m-Hawk 2011 (36756517492).jpg", "license": "CC BY-SA 2.0", "author": "RL GNZLZ from Chile"},
+  {"car": "CAR-0005", "file": "File:Mahindra Scorpio GLX 2015 (53537807901).jpg", "license": "CC BY-SA 2.0", "author": "RL GNZLZ from Chile"},
+  {"car": "CAR-0006", "color": "Grey", "file": "File:2016 Toyota Innova 2.8 G.jpg", "license": "CC BY-SA 4.0", "author": "Captainmorlypogi1959"},
+  {"car": "CAR-0006", "file": "File:2016 Toyota Innova 2.8 V (2).jpg", "license": "CC BY-SA 4.0", "author": "Captainmorlypogi1959"},
+  {"car": "CAR-0003", "color": "Silver", "file": "File:20151017 Hyundai Creta 01.jpg", "license": "CC BY 4.0", "author": "Chu"},
+  {"car": "CAR-0003", "file": "File:20151017 Hyundai Creta 02.jpg", "license": "CC BY 4.0", "author": "Chu"},
+  {"car": "CAR-0007", "color": "Red", "file": "File:2018 Honda City 1.5 VX Navi in Ruby Red Pearl, 08-09-2024.jpg", "license": "CC BY-SA 4.0", "author": "Ethan Llamas"},
+  {"car": "CAR-0008", "color": "Orange", "file": "File:Renault Kwid (53343921273).jpg", "license": "CC BY 2.0", "author": "Jason Lawrence from New York"},
+  {"car": "CAR-0009", "color": "White", "file": "File:Suzuki Dzire 1.2 GL 2023 (1).jpg", "license": "CC BY-SA 4.0", "author": "Captainmorlypogi1959"},
+  {"car": "CAR-0009", "file": "File:Suzuki Dzire 1.2 GL 2023 (2).jpg", "license": "CC BY-SA 4.0", "author": "Captainmorlypogi1959"},
+  {"car": "CAR-0010", "color": "White", "file": "File:2018 Hyundai i20 SE MPi 1.2 Front.jpg", "license": "CC BY-SA 4.0", "author": "Vauxford"},
+  {"car": "CAR-0010", "file": "File:2018 Hyundai i20 SE MPi 1.2 Rear.jpg", "license": "CC BY-SA 4.0", "author": "Vauxford"}
+]
