@@ -1,15 +1,15 @@
 # Merges to main go live on Netlify: checks first, then the database changes, then the site.
 # The database goes first so the new site never runs against an old schema.
 #
-# Needs, in GitHub → Settings → Environments → production:
-#   secrets  SUPABASE_ACCESS_TOKEN   (supabase.com → Account → Access tokens)
-#            SUPABASE_DB_PASSWORD    (the database password set when the project was made)
-#            NETLIFY_AUTH_TOKEN      (Netlify → User settings → Applications → Personal access tokens)
+# Needs, in GitHub → Settings → Environments → production (with you as a required reviewer):
+#   secrets  SUPABASE_ACCESS_TOKEN    (supabase.com → Account → Access tokens)
+#            NETLIFY_BUILD_HOOK_URL   (Netlify → Project configuration → Build & deploy →
+#                                      Continuous deployment → Build hooks; branch main)
 # and in Settings → Secrets and variables → Actions → Variables (repository level, not secret):
 #   SUPABASE_PROJECT_REF   (the id in the project's dashboard address)
-#   NETLIFY_SITE_ID        (Netlify → Project configuration → Project ID)
-# Netlify's own builds stay stopped; this workflow is the only thing that puts code live.
-# Add yourself as a required reviewer on that environment to approve each release by hand.
+#
+# Netlify builds the site itself, on its own servers, where the secret keys are readable.
+# netlify.toml makes it skip builds on push, so this workflow decides when the site updates.
 name: Deploy
 
 on:
@@ -47,16 +47,12 @@ jobs:
       - name: Apply new database migrations
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
           pnpm exec supabase link --project-ref "${{ vars.SUPABASE_PROJECT_REF }}"
           pnpm exec supabase db push
 
-      # Builds with the environment variables saved on Netlify, then publishes.
-      - name: Build and deploy the site to Netlify
+      # Netlify then builds main and publishes it; watch it under Deploys in Netlify.
+      - name: Ask Netlify to build and publish the site
         env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ vars.NETLIFY_SITE_ID }}
-        run: |
-          pnpm dlx netlify-cli@27 build --context production
-          pnpm dlx netlify-cli@27 deploy --prod --message "${{ github.sha }}"
+          NETLIFY_BUILD_HOOK_URL: ${{ secrets.NETLIFY_BUILD_HOOK_URL }}
+        run: curl --fail --silent --show-error -X POST -d '{}' "$NETLIFY_BUILD_HOOK_URL?trigger_title=Deploy+${GITHUB_SHA::7}"

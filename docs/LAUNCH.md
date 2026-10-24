@@ -43,7 +43,7 @@ The demo cars in `supabase/seed.sql` only load locally; the hosted database star
 
    The build stops if any of the first four are missing.
 3. Domain: buy one (a `.in` is about ₹700 a year) and point it at the host. HTTPS is automatic.
-4. On Netlify, **stop builds** (Project configuration → Build & deploy → Continuous deployment → Build settings → Stop builds), so only the Deploy workflow puts code live: after the database is updated, it builds with the variables saved on Netlify and publishes.
+4. On Netlify, create a **build hook** for `main` (Project configuration → Build & deploy → Continuous deployment → Build hooks). Keep builds **active**: `netlify.toml` already makes Netlify skip the build on each push, and Netlify always runs a build started by a hook. So only the Deploy workflow puts code live, after the database is updated.
 5. Open Admin → Settings: business name, phone, WhatsApp, hours.
 
 ## 4. CI/CD (you, once)
@@ -57,7 +57,7 @@ Already in `.github/workflows/`:
 - **Deploy** (`deploy.yml`), on every push to `main`:
   - runs Checks;
   - pushes new migrations to the live database;
-  - builds and publishes the site with the Netlify CLI.
+  - calls the build hook, so Netlify builds and publishes `main`.
 
   It waits for your approval if you set that up below.
 - **Keep database awake** (`keep-alive.yml`): one tiny read a day, so the free project isn't paused after a week.
@@ -66,9 +66,9 @@ In GitHub → Settings:
 
 - **Environments** → new environment `production`:
   - Required reviewers: yourself, so nothing goes live without a click.
-  - Secrets: `SUPABASE_ACCESS_TOKEN` (supabase.com → Account → Access tokens), `SUPABASE_DB_PASSWORD`, `NETLIFY_AUTH_TOKEN` (Netlify → User settings → Applications → Personal access tokens).
+  - Secrets: `SUPABASE_ACCESS_TOKEN` (supabase.com → Account → Access tokens) and `NETLIFY_BUILD_HOOK_URL` (the hook from step 3.4; secret, because anyone with it can start builds).
 - **Secrets and variables → Actions → Variables** (repository level; none of these are secret):
-  - `SUPABASE_PROJECT_REF` and `NETLIFY_SITE_ID` (Netlify → Project configuration → Project ID). Until `SUPABASE_PROJECT_REF` is set, Deploy only runs the checks.
+  - `SUPABASE_PROJECT_REF`. Until it is set, Deploy only runs the checks.
   - `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`, for the keep-alive.
 - **Branches** → protect `main`: require the "Checks" job to pass and work through pull requests.
 

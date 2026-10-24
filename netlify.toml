@@ -1,0 +1,5 @@
+# Netlify skips the build it would start on every push. The site is only built when the Deploy
+# workflow calls the build hook, after the checks pass and the database is updated.
+# (Netlify never cancels a build started by a build hook, whatever this command returns.)
+[build]
+  ignore = "exit 0"
