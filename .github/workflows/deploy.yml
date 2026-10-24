@@ -2,13 +2,13 @@
 # The database goes first so the new site never runs against an old schema.
 #
 # Needs, in GitHub → Settings → Environments → production (with you as a required reviewer):
-#   secrets  SUPABASE_ACCESS_TOKEN    (supabase.com → Account → Access tokens; scoped to this one
-#                                      project, Read on Project Settings, API Keys, API Key Secrets)
-#            SUPABASE_DB_PASSWORD     (the database password; db push uses it, not the token)
+#   secrets  SUPABASE_DB_URL          (Supabase → Connect → Session pooler connection string,
+#                                      with the database password filled in. GitHub's runners
+#                                      have no IPv6, so the direct database address can't be used.)
 #            NETLIFY_BUILD_HOOK_URL   (Netlify → Project configuration → Developer settings →
 #                                      Continuous deployment → Build hooks; branch main)
 # and in Settings → Secrets and variables → Actions → Variables (repository level, not secret):
-#   SUPABASE_PROJECT_REF   (the id in the project's dashboard address)
+#   SUPABASE_PROJECT_REF   (the id in the project's dashboard address; also switches the release on)
 #
 # Netlify builds the site itself, on its own servers, where the secret keys are readable.
 # netlify.toml makes it skip builds on push, so this workflow decides when the site updates.
@@ -48,11 +48,8 @@ jobs:
 
       - name: Apply new database migrations
         env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-        run: |
-          pnpm exec supabase link --project-ref "${{ vars.SUPABASE_PROJECT_REF }}"
-          pnpm exec supabase db push
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: pnpm exec supabase db push --db-url "$SUPABASE_DB_URL"
 
       # Netlify then builds main and publishes it; watch it under Deploys in Netlify.
       - name: Ask Netlify to build and publish the site
