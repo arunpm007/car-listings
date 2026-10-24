@@ -32,4 +32,4 @@ export const defaultSite: Site = {
 };
 
 /** The public address of the site, used in share previews. */
-export const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+export const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3060";

@@ -25,7 +25,7 @@ export async function proxy(request: NextRequest) {
 
   const { data } = await supabase.auth.getClaims();
   // Pages a signed-out person must reach: login, forgot password, and the email link landing.
-  const open = ["/admin/login", "/admin/forgot", "/admin/auth/confirm"].includes(request.nextUrl.pathname);
+  const open = ["/admin/login", "/admin/forgot", "/admin/auth/confirm", "/admin/auth/continue"].includes(request.nextUrl.pathname);
 
   if (!data?.claims && !open) {
     const url = request.nextUrl.clone();

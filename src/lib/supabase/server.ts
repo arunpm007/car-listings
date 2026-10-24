@@ -1,6 +1,8 @@
 import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { cache } from "react";
 import { supabaseKey, supabaseUrl } from "./env";
 
 export async function createClient() {
@@ -26,7 +28,7 @@ export async function createClient() {
  * The signed-in admin, or null. Checks the admins table, not just that someone is logged in.
  * `mfa` is true once they've passed two-step login in this session (assurance level aal2).
  */
-export async function getAdmin() {
+export const getAdmin = cache(async () => {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const userId = data?.claims?.sub;
@@ -38,4 +40,15 @@ export async function getAdmin() {
     email: (data.claims.email as string | undefined) ?? null,
     mfa: data.claims.aal === "aal2",
   };
+});
+
+/**
+ * Every admin page, admin data function and admin action starts with this. Layouts are not a
+ * guard: Next.js can render a page without re-running its layout, so each page checks for itself.
+ */
+export async function requireAdmin() {
+  const admin = await getAdmin();
+  if (!admin) redirect("/admin/login");
+  if (!admin.mfa) redirect("/admin/mfa");
+  return admin;
 }

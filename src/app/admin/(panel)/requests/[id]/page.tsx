@@ -7,10 +7,12 @@ import { formatDate, formatKm, formatPrice, fuelLabel, transmissionLabel } from 
 import { waNumber } from "@/lib/phone";
 import { photoUrl } from "@/lib/supabase/env";
 import { whatsappHref } from "@/lib/contact";
+import { requireAdmin } from "@/lib/supabase/server";
 
 export const metadata = { title: "Sell request" };
 
 export default async function RequestPage({ params }: PageProps<"/admin/requests/[id]">) {
+  await requireAdmin();
   const id = Number((await params).id);
   if (!Number.isSafeInteger(id) || id <= 0) notFound();
   const request = await getSellRequest(id);

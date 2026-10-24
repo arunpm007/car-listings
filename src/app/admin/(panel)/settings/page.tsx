@@ -2,11 +2,12 @@ import { AdminsPanel } from "@/components/admin/AdminsPanel";
 import { SettingsPanel } from "@/components/admin/SettingsPanel";
 import { getAdminAccounts } from "@/lib/admin-data";
 import { getSite } from "@/lib/settings";
-import { getAdmin } from "@/lib/supabase/server";
+import { getAdmin, requireAdmin } from "@/lib/supabase/server";
 
 export const metadata = { title: "Settings" };
 
 export default async function SettingsPage() {
+  await requireAdmin();
   const [site, admins, me] = await Promise.all([getSite(), getAdminAccounts(), getAdmin()]);
   return (
     <>

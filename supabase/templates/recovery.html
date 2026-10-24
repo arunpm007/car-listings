@@ -1,5 +1,5 @@
 <h2>Reset your admin password</h2>
 <p>Someone asked to reset the password for {{ .Email }} on {{ .SiteURL }}.</p>
-<p><a href="{{ .SiteURL }}/admin/auth/confirm?token_hash={{ .TokenHash }}&type=recovery">Choose a new password</a></p>
+<p><a href="{{ .SiteURL }}/admin/auth/continue?token_hash={{ .TokenHash }}&type=recovery">Choose a new password</a></p>
 <p>If it wasn't you, ignore this email; your password stays the same. The link works once and expires.</p>
 <p>Only open this link from the site's own address. We never ask for your password by email or WhatsApp.</p>

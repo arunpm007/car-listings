@@ -1,6 +1,6 @@
 import "server-only";
 import { REQUEST_PHOTO_BUCKET } from "./supabase/env";
-import { createClient } from "./supabase/server";
+import { createClient, requireAdmin } from "./supabase/server";
 import { createServiceClient } from "./supabase/service";
 import { todayInIndia } from "./format";
 import type { CarPrivate, Lead, LeadStatus, RequestStatus, SellRequest } from "./types";
@@ -131,6 +131,8 @@ export type AdminAccount = { id: string; email: string | null; addedAt: string; 
 
 /** Everyone on the admin list, with whether they've set up two-step login. Admin pages only. */
 export async function getAdminAccounts(): Promise<AdminAccount[]> {
+  // Reads with the secret key, so it must check for itself.
+  await requireAdmin();
   const service = createServiceClient();
   const [{ data: rows }, { data: users }] = await Promise.all([
     service.from("admins").select("user_id, created_at").order("created_at"),

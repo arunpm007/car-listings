@@ -3,9 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { stripJpegMetadata } from "@/lib/jpeg";
 import { normalizeIndianPhone, prettyPhone, waNumber } from "@/lib/phone";
 import { PHOTO_BUCKET, REQUEST_PHOTO_BUCKET } from "@/lib/supabase/env";
-import { createClient, getAdmin } from "@/lib/supabase/server";
+import { createClient, getAdmin, requireAdmin } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
   CATEGORIES,
@@ -25,13 +26,7 @@ import {
   type RequestStatus,
 } from "@/lib/types";
 
-/** Every admin action starts here: signed in, on the admins list, and through two-step login. */
-async function requireAdmin() {
-  const admin = await getAdmin();
-  if (!admin) redirect("/admin/login");
-  if (!admin.mfa) redirect("/admin/mfa");
-  return admin;
-}
+// Every admin action starts with requireAdmin(): signed in, on the admins list, and through two-step login.
 
 function slugify(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -190,7 +185,7 @@ export async function saveCar(id: number | null, input: CarInput, fromRequestId?
   // car is becoming a listing.
   for (const p of photos) {
     if (p.bucket !== REQUEST_PHOTO_BUCKET) continue;
-    if (!p.full_path.startsWith("requests/")) return { ok: false, error: "Unexpected photo" };
+    if (!p.full_path.startsWith("requests/") || !p.thumb_path.startsWith("requests/")) return { ok: false, error: "Unexpected photo" };
     const base = `cars/${crypto.randomUUID()}`;
     for (const [from, to] of [
       [p.full_path, `${base}-full.jpg`],
@@ -198,9 +193,12 @@ export async function saveCar(id: number | null, input: CarInput, fromRequestId?
     ] as const) {
       const { data: file, error: readError } = await supabase.storage.from(REQUEST_PHOTO_BUCKET).download(from);
       if (readError || !file) return { ok: false, error: "Couldn't copy a photo from the request. Try again." };
+      // Going public: must really be a JPEG, and leaves without any location or camera data.
+      const clean = stripJpegMetadata(new Uint8Array(await file.arrayBuffer()));
+      if (!clean) return { ok: false, error: "A photo from the request isn't a valid JPEG. Remove it and try again." };
       const { error: writeError } = await supabase.storage
         .from(PHOTO_BUCKET)
-        .upload(to, file, { contentType: "image/jpeg", cacheControl: "31536000" });
+        .upload(to, clean, { contentType: "image/jpeg", cacheControl: "31536000" });
       if (writeError) return { ok: false, error: writeError.message };
     }
     p.full_path = `${base}-full.jpg`;
@@ -645,6 +643,28 @@ export async function purgeExpiredDocuments() {
   if (!data?.length) return;
   await supabase.storage.from(DOC_BUCKET).remove(data.map((d) => d.path));
   await supabase.from("car_documents").delete().in("id", data.map((d) => d.id));
+}
+
+/**
+ * Clears photos uploaded for sell requests that were never finished (the phone closed the
+ * page, or someone used the upload links without sending the form). Runs on admin page loads.
+ */
+export async function purgeAbandonedRequestPhotos() {
+  const admin = await getAdmin();
+  if (!admin?.mfa) return;
+  const supabase = await createClient();
+  const now = Date.now();
+  const { data } = await supabase
+    .from("sell_requests")
+    .select("token")
+    .eq("photos", "[]")
+    .lt("created_at", new Date(now - 3 * 60 * 60 * 1000).toISOString())
+    .gt("created_at", new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString())
+    .limit(20);
+  for (const { token } of data ?? []) {
+    const { data: files } = await supabase.storage.from(REQUEST_PHOTO_BUCKET).list(`requests/${token}`, { limit: 100 });
+    if (files?.length) await supabase.storage.from(REQUEST_PHOTO_BUCKET).remove(files.map((f) => `requests/${token}/${f.name}`));
+  }
 }
 
 // Admin accounts: invite, remove, reset two-step login. These use the service key because

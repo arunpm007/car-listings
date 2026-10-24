@@ -12,6 +12,7 @@ import { getAllCarsForAdmin } from "@/lib/cars";
 import { formatDate, formatKm, formatPrice, formatPriceShort } from "@/lib/format";
 import { photoUrl } from "@/lib/supabase/env";
 import { REMOVED_REASON_LABEL, STATUSES, isPublicStatus, type CarStatus } from "@/lib/types";
+import { requireAdmin } from "@/lib/supabase/server";
 
 const TABS: { key: CarStatus | "active"; label: string }[] = [
   { key: "active", label: "On sale & in deal" },
@@ -22,6 +23,7 @@ const TABS: { key: CarStatus | "active"; label: string }[] = [
 ];
 
 export default async function AdminHome({ searchParams }: PageProps<"/admin">) {
+  await requireAdmin();
   const sp = await searchParams;
   const raw = sp.tab;
   const savedId = Number(sp.saved) || null;

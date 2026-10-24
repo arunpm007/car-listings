@@ -6,7 +6,7 @@ import { getSite } from "@/lib/settings";
 import { ConfirmProvider } from "@/components/admin/Dialog";
 import { getAdminBadges } from "@/lib/admin-data";
 import { createClient, getAdmin } from "@/lib/supabase/server";
-import { purgeExpiredDocuments, signOut } from "../actions";
+import { purgeAbandonedRequestPhotos, purgeExpiredDocuments, signOut } from "../actions";
 
 export const metadata: Metadata = { title: { default: "Admin", template: "%s · Admin" }, robots: { index: false } };
 
@@ -28,8 +28,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     );
   }
 
-  // Clears document copies kept past their 30 days after a sale.
-  const [badges, site] = await Promise.all([getAdminBadges(), getSite(), purgeExpiredDocuments()]);
+  // Housekeeping: paper copies past their 30 days, and photos from sell requests never sent.
+  const [badges, site] = await Promise.all([getAdminBadges(), getSite(), purgeExpiredDocuments(), purgeAbandonedRequestPhotos()]);
 
   return (
     <>

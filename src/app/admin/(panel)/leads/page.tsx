@@ -4,10 +4,12 @@ import { LeadForm, LeadList, type CarOption } from "@/components/admin/Leads";
 import { getLeads } from "@/lib/admin-data";
 import { getAllCarsForAdmin } from "@/lib/cars";
 import { todayInIndia } from "@/lib/format";
+import { requireAdmin } from "@/lib/supabase/server";
 
 export const metadata = { title: "Leads" };
 
 export default async function LeadsPage({ searchParams }: PageProps<"/admin/leads">) {
+  await requireAdmin();
   const closed = (await searchParams).view === "closed";
   const [leads, cars] = await Promise.all([getLeads({ open: !closed }), getAllCarsForAdmin()]);
   const carOptions: CarOption[] = cars

@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
 
 const isDev = process.env.NODE_ENV === "development";
+
+// A production build without these would quietly point share links and the security policy at
+// localhost, so stop the build instead.
+if (process.env.NODE_ENV === "production") {
+  for (const name of ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "NEXT_PUBLIC_SITE_URL"]) {
+    if (!process.env[name]) throw new Error(`${name} must be set for a production build`);
+  }
+}
 // Photos, uploads and sign-in all go to Supabase, so it's the one outside origin the pages may use.
 const supabase = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 

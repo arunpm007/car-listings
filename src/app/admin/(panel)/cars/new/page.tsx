@@ -3,8 +3,10 @@ import { CarForm, NEW_OPTION, type FormState } from "@/components/admin/CarForm"
 import { getSellRequest } from "@/lib/admin-data";
 import { getCatalog } from "@/lib/cars";
 import type { SellRequest } from "@/lib/types";
+import { requireAdmin } from "@/lib/supabase/server";
 
 export default async function NewCarPage({ searchParams }: PageProps<"/admin/cars/new">) {
+  await requireAdmin();
   const requestId = Number((await searchParams).request);
   const [{ brands, models }, request] = await Promise.all([
     getCatalog(),

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3060",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -13,7 +13,8 @@
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset",
     "admin:create": "tsx scripts/create-admin.ts",
-    "seed:photos": "tsx scripts/seed-demo-photos.ts"
+    "seed:photos": "tsx scripts/seed-demo-photos.ts",
+    "check": "pnpm lint && pnpm typecheck && pnpm test"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
@@ -41,5 +42,8 @@
     "vitest": "^5.0.5"
   },
   "packageManager": "pnpm@11.6.0",
-  "type": "module"
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  }
 }

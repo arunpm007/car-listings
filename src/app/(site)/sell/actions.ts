@@ -1,9 +1,8 @@
 "use server";
 
-import { createHash } from "node:crypto";
-import { headers } from "next/headers";
 import { z } from "zod";
 import { normalizeIndianPhone } from "@/lib/phone";
+import { DAY, HOUR, clientIpHash, withinLimits } from "@/lib/rate-limit";
 import { REQUEST_PHOTO_BUCKET } from "@/lib/supabase/env";
 import { createServiceClient } from "@/lib/supabase/service";
 import { FUELS, TRANSMISSIONS } from "@/lib/types";
@@ -11,6 +10,8 @@ import { FUELS, TRANSMISSIONS } from "@/lib/types";
 const MAX_PHOTOS = 10;
 const PER_IP_PER_HOUR = 3;
 const PER_PHONE_PER_DAY = 3;
+// However many addresses someone uses, the whole site takes at most this many an hour.
+const ALL_PER_HOUR = 20;
 
 const text = (max: number) =>
   z
@@ -58,17 +59,6 @@ export type StartResult =
   | { ok: false; error: string }
   | { ok: true; code: string; token: string; uploads: Upload[] };
 
-async function ipHash() {
-  const h = await headers();
-  // Use the address the hosting platform saw, not one the visitor can type into a header.
-  // Cloudflare sets cf-connecting-ip, Vercel and most proxies set x-real-ip. The first entry of
-  // x-forwarded-for comes from the client and can be faked, so only the last hop is used.
-  const forwarded = h.get("x-forwarded-for")?.split(",").map((s) => s.trim()).filter(Boolean);
-  const ip = h.get("cf-connecting-ip") || h.get("x-real-ip") || forwarded?.at(-1) || "unknown";
-  // Salted so the stored value can't be turned back into an address.
-  return createHash("sha256").update(`${ip}:${process.env.SUPABASE_SECRET_KEY}`).digest("hex").slice(0, 32);
-}
-
 /**
  * Saves the request and hands back one-time upload links for the photos, so they go straight
  * to storage from the phone instead of through this server.
@@ -82,17 +72,17 @@ export async function startSellRequest(input: SellRequestInput): Promise<StartRe
   const phone = normalizeIndianPhone(fields.seller_phone);
   if (!phone) return { ok: false, error: "Enter a 10-digit mobile number" };
 
-  const supabase = createServiceClient();
-  const hash = await ipHash();
-  const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-  const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-  const [byIp, byPhone] = await Promise.all([
-    supabase.from("sell_requests").select("id", { count: "exact", head: true }).eq("ip_hash", hash).gte("created_at", hourAgo),
-    supabase.from("sell_requests").select("id", { count: "exact", head: true }).eq("seller_phone", phone).gte("created_at", dayAgo),
+  const hash = await clientIpHash();
+  const allowed = await withinLimits([
+    [`sell:ip:${hash}`, PER_IP_PER_HOUR, HOUR],
+    [`sell:phone:${phone}`, PER_PHONE_PER_DAY, DAY],
+    ["sell:all", ALL_PER_HOUR, HOUR],
   ]);
-  if ((byIp.count ?? 0) >= PER_IP_PER_HOUR || (byPhone.count ?? 0) >= PER_PHONE_PER_DAY) {
+  if (!allowed) {
     return { ok: false, error: "We already have your request. We will call you soon — or message us on WhatsApp." };
   }
+
+  const supabase = createServiceClient();
 
   // A picked brand wins over typed text; a typed model only makes sense with it.
   const row = {

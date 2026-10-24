@@ -13,10 +13,11 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { getCarForAdmin, getCatalog } from "@/lib/cars";
 import { carPath, carTitle } from "@/lib/car-url";
 import { formatDate } from "@/lib/format";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, requireAdmin } from "@/lib/supabase/server";
 import { DELETABLE_STATUSES, REMOVED_REASON_LABEL, isPublicStatus, type CarDocument, type CarPrivate } from "@/lib/types";
 
 export default async function EditCarPage({ params }: PageProps<"/admin/cars/[id]">) {
+  await requireAdmin();
   const id = Number((await params).id);
   if (!Number.isSafeInteger(id) || id <= 0) notFound();
 

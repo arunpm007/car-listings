@@ -60,28 +60,26 @@ pnpm dev
 
 ## Going live
 
-1. Create a project at supabase.com (Mumbai region). In **Authentication**:
-   - **Sign In / Providers**: turn off "Allow new users to sign up". Leave the Email provider itself on, or the admin can't sign in either. Set the minimum password length to 12 and require letters and digits.
-   - **Multi-Factor**: turn on TOTP (authenticator app).
-   - **URL Configuration**: Site URL = the live address; add `https://<your-domain>/**` to the redirect URLs.
-   - **Emails**: paste `supabase/templates/invite.html` and `recovery.html` into the "Invite user" and "Reset password" templates. Their links go to `/admin/auth/confirm`; the default templates won't work.
-   - **SMTP**: set up your own sender (Resend, Brevo or similar). Supabase's built-in sender only mails team members and a few messages an hour, so invites and resets won't arrive without it.
-2. Link and push the schema; this creates the tables, security policies, photo bucket and brand catalogue. The demo cars are not pushed.
-   ```bash
-   pnpm exec supabase link --project-ref <your-project-ref>
-   pnpm exec supabase db push
-   ```
-3. Put the hosted URL and keys in `.env.local` and run `pnpm admin:create` once to make the first admin. Invite everyone else from **Admin → Settings → Admins**.
-4. Deploy to Vercel. Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_SITE_URL` and `SUPABASE_SECRET_KEY`. The secret key is only used on the server, by the sell form; never prefix it with `NEXT_PUBLIC_`.
-5. Sign in and open **Admin → Settings** to set the business name, phone, WhatsApp number, hours and (when there is one) the shop address. Every page uses these; `src/config/site.ts` only holds the fallback values.
+Follow [docs/LAUNCH.md](docs/LAUNCH.md): choosing a host, the Supabase dashboard settings, environment variables, the first admin, and CI/CD.
+
+## CI/CD
+
+GitHub Actions in `.github/workflows/`:
+
+- **Checks:** every branch push and pull request. Runs lint, types, tests and a dependency audit, then builds a fresh Supabase from the migrations and does a production build against it.
+- **Deploy:** every push to `main`. Runs the checks, waits for your approval, applies new migrations to the live database, then triggers the host's deploy hook.
+- **Keep database awake:** a daily ping, so the free Supabase project isn't paused.
+
+`pnpm check` runs the same lint, types and tests locally.
 
 ## Scripts
 
 | Command | What it does |
 | --- | --- |
 | `pnpm dev` | Run the site |
-| `pnpm test` | Unit tests (formatting, URLs, WhatsApp links, phone numbers) |
+| `pnpm test` | Unit tests (formatting, URLs, WhatsApp links, phone numbers, photo cleaning) |
 | `pnpm typecheck` / `pnpm lint` | Checks |
+| `pnpm check` | Lint, types and tests together (what CI runs first) |
 | `pnpm db:start` / `db:stop` | Start or stop local Supabase |
 | `pnpm db:reset` | Rebuild the local database from migrations and seed |
 | `pnpm admin:create <email> <password>` | Create the first admin login (later admins are invited from Settings) |
@@ -105,6 +103,9 @@ Buyers never see documents. Each car's admin page has a **Papers** panel:
 
 ## Admin accounts
 
+Every admin page, admin data function and admin action calls `requireAdmin()` itself; the layout is not relied on, because Next.js can render a page without re-running its layout. Email links land on a **Continue** page and are used only when the button is pressed, so mail scanners that open links can't use them up.
+
+
 - **Adding someone:** Settings → Admins → Invite. They get an email, set a password, then set up two-step login. Nobody can sign up on their own.
 - **Two-step login is required.** The database only treats a session as admin after the authenticator code has been entered, so a stolen password alone can read nothing.
 - **Forgot password:** the link on the sign-in page emails a reset link. It says the same thing whether or not the email is an admin, and the reset still asks for the authenticator code.
@@ -119,9 +120,11 @@ Buyers never see documents. Each car's admin page has a **Papers** panel:
 ## How the sell form stays safe
 
 - Requests are written by the server with the secret key, after validation. The public can't read or write `sell_requests`, `leads` or `car_private`.
-- Limits: 3 requests per IP per hour, 3 per phone number per day, plus a hidden field that catches bots. The IP is stored only as a salted hash.
+- Limits: 3 requests per address per hour, 3 per phone number per day and 20 for the whole site per hour, plus a hidden field that catches bots. They are checked and recorded in one locked database step (`take_rate_limit`), so a burst sent at once can't slip through. The address is stored only as a salted hash.
 - Photos are resized in the browser (location data removed) and uploaded with one-time links into the private `request-photos` bucket. Admins see them through short-lived links; they're copied to the public `car-photos` bucket only when a listing is created from the request, and deleted with the request.
-- The rate limit uses the visitor's real IP (Cloudflare's `cf-connecting-ip`, then `x-real-ip`, then the last `x-forwarded-for` entry), so a faked header can't dodge it.
+- The address comes only from the header the host sets (`CLIENT_IP_HEADER`), so a faked header can't dodge the limit.
+- Photos for requests that were never finished are cleared after 3 hours. Photos copied to a public listing are checked as real JPEGs and stripped of EXIF (GPS, camera) on the way.
+- "Forgot password" has the same kind of limits (3 per address per hour, 3 per email per day, 10 overall per hour), so it can't be used to burn the email allowance.
 - Typed-in brands and models stay on the request. They only join the catalogue when the admin saves a listing.
 
 ## Not built yet
