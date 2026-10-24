@@ -1,11 +1,14 @@
-# Merges to main go live: checks first, then the database changes, then the site.
+# Merges to main go live on Netlify: checks first, then the database changes, then the site.
 # The database goes first so the new site never runs against an old schema.
 #
 # Needs, in GitHub → Settings → Environments → production:
 #   secrets  SUPABASE_ACCESS_TOKEN   (supabase.com → Account → Access tokens)
 #            SUPABASE_DB_PASSWORD    (the database password set when the project was made)
-#            DEPLOY_HOOK_URL         (the host's deploy/build hook; turn off the host's own auto-deploy)
-#   variable SUPABASE_PROJECT_REF    (the id in the project's dashboard address)
+#            NETLIFY_AUTH_TOKEN      (Netlify → User settings → Applications → Personal access tokens)
+# and in Settings → Secrets and variables → Actions → Variables (repository level, not secret):
+#   SUPABASE_PROJECT_REF   (the id in the project's dashboard address)
+#   NETLIFY_SITE_ID        (Netlify → Project configuration → Project ID)
+# Netlify's own builds stay stopped; this workflow is the only thing that puts code live.
 # Add yourself as a required reviewer on that environment to approve each release by hand.
 name: Deploy
 
@@ -27,6 +30,8 @@ jobs:
 
   release:
     needs: checks
+    # Skipped (grey, not red) until the production environment is set up in GitHub.
+    if: vars.SUPABASE_PROJECT_REF != ''
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: production
@@ -47,7 +52,11 @@ jobs:
           pnpm exec supabase link --project-ref "${{ vars.SUPABASE_PROJECT_REF }}"
           pnpm exec supabase db push
 
-      - name: Deploy the site
+      # Builds with the environment variables saved on Netlify, then publishes.
+      - name: Build and deploy the site to Netlify
         env:
-          DEPLOY_HOOK_URL: ${{ secrets.DEPLOY_HOOK_URL }}
-        run: curl --fail --silent --show-error -X POST "$DEPLOY_HOOK_URL"
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ vars.NETLIFY_SITE_ID }}
+        run: |
+          pnpm dlx netlify-cli@27 build --context production
+          pnpm dlx netlify-cli@27 deploy --prod --message "${{ github.sha }}"

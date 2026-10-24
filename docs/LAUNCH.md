@@ -24,7 +24,7 @@ Cloudflare's free plan allows only 10 ms of CPU per request, which a Next.js pag
    - Emails → SMTP: your own sender (Resend's free plan is plenty: verify your domain there, then copy its SMTP details here). Without it, invites and resets only reach Supabase team members.
    - Rate limits: the defaults are fine.
 3. **Schema**: `pnpm exec supabase link --project-ref <ref>` then `pnpm exec supabase db push`. After the first time, the Deploy workflow does this.
-4. **First admin**: put the hosted URL and keys in a temporary `.env.production.local`, then run `pnpm admin:create you@example.com '<12+ chars>'`. Sign in on the live site and set up two-step login. Invite everyone else from Settings.
+4. **First admin**: put the hosted URL and keys in `.env.production.local` (git-ignored), then run `ENV_FILE=.env.production.local pnpm admin:create you@example.com '<12+ chars>'`. Sign in on the live site and set up two-step login. Invite everyone else from Settings.
 
 The demo cars in `supabase/seed.sql` only load locally; the hosted database starts empty.
 
@@ -43,7 +43,7 @@ The demo cars in `supabase/seed.sql` only load locally; the hosted database star
 
    The build stops if any of the first four are missing.
 3. Domain: buy one (a `.in` is about ₹700 a year) and point it at the host. HTTPS is automatic.
-4. Turn **off** the host's automatic deploy on push, and create a **deploy hook** (Netlify: Site configuration → Build hooks). The Deploy workflow calls it after the database is updated.
+4. On Netlify, **stop builds** (Project configuration → Build & deploy → Continuous deployment → Build settings → Stop builds), so only the Deploy workflow puts code live: after the database is updated, it builds with the variables saved on Netlify and publishes.
 5. Open Admin → Settings: business name, phone, WhatsApp, hours.
 
 ## 4. CI/CD (you, once)
@@ -57,7 +57,7 @@ Already in `.github/workflows/`:
 - **Deploy** (`deploy.yml`), on every push to `main`:
   - runs Checks;
   - pushes new migrations to the live database;
-  - calls the deploy hook.
+  - builds and publishes the site with the Netlify CLI.
 
   It waits for your approval if you set that up below.
 - **Keep database awake** (`keep-alive.yml`): one tiny read a day, so the free project isn't paused after a week.
@@ -66,9 +66,10 @@ In GitHub → Settings:
 
 - **Environments** → new environment `production`:
   - Required reviewers: yourself, so nothing goes live without a click.
-  - Secrets: `SUPABASE_ACCESS_TOKEN` (supabase.com → Account → Access tokens), `SUPABASE_DB_PASSWORD`, `DEPLOY_HOOK_URL`.
-  - Variable: `SUPABASE_PROJECT_REF`.
-- **Secrets and variables → Actions → Variables**: `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`, for the keep-alive.
+  - Secrets: `SUPABASE_ACCESS_TOKEN` (supabase.com → Account → Access tokens), `SUPABASE_DB_PASSWORD`, `NETLIFY_AUTH_TOKEN` (Netlify → User settings → Applications → Personal access tokens).
+- **Secrets and variables → Actions → Variables** (repository level; none of these are secret):
+  - `SUPABASE_PROJECT_REF` and `NETLIFY_SITE_ID` (Netlify → Project configuration → Project ID). Until `SUPABASE_PROJECT_REF` is set, Deploy only runs the checks.
+  - `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`, for the keep-alive.
 - **Branches** → protect `main`: require the "Checks" job to pass and work through pull requests.
 
 The day-to-day flow:

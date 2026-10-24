@@ -3,8 +3,9 @@ import type { NextConfig } from "next";
 const isDev = process.env.NODE_ENV === "development";
 
 // A production build without these would quietly point share links and the security policy at
-// localhost, so stop the build instead.
-if (process.env.NODE_ENV === "production") {
+// localhost, so stop the build instead. `next typegen` (run by `pnpm typecheck`) loads this file
+// the same way but builds nothing, so it's let through.
+if (process.env.NODE_ENV === "production" && !process.argv.includes("typegen")) {
   for (const name of ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "NEXT_PUBLIC_SITE_URL"]) {
     if (!process.env[name]) throw new Error(`${name} must be set for a production build`);
   }

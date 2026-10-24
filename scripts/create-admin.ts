@@ -1,10 +1,12 @@
 // Creates (or promotes) the FIRST admin login. Public sign-up is off; after this, admins invite
 // each other from Settings → Admins.
 //   pnpm admin:create you@example.com 'a-long-password'
+// For the live project, keep its keys in .env.production.local (git-ignored) and run:
+//   ENV_FILE=.env.production.local pnpm admin:create you@example.com 'a-long-password'
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 
-config({ path: ".env.local" });
+config({ path: process.env.ENV_FILE ?? ".env.local" });
 
 const [email, password] = process.argv.slice(2);
 if (!email || !password) {
@@ -19,7 +21,7 @@ if (password.length < 12 || !/[a-z]/i.test(password) || !/\d/.test(password)) {
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const secret = process.env.SUPABASE_SECRET_KEY;
 if (!url || !secret) {
-  console.error("Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY in .env.local");
+  console.error(`Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY in ${process.env.ENV_FILE ?? ".env.local"}`);
   process.exit(1);
 }
 
