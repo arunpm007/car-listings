@@ -2,8 +2,10 @@
 # The database goes first so the new site never runs against an old schema.
 #
 # Needs, in GitHub → Settings → Environments → production (with you as a required reviewer):
-#   secrets  SUPABASE_ACCESS_TOKEN    (supabase.com → Account → Access tokens)
-#            NETLIFY_BUILD_HOOK_URL   (Netlify → Project configuration → Build & deploy →
+#   secrets  SUPABASE_ACCESS_TOKEN    (supabase.com → Account → Access tokens; scoped to this one
+#                                      project, Read on Project Settings, API Keys, API Key Secrets)
+#            SUPABASE_DB_PASSWORD     (the database password; db push uses it, not the token)
+#            NETLIFY_BUILD_HOOK_URL   (Netlify → Project configuration → Developer settings →
 #                                      Continuous deployment → Build hooks; branch main)
 # and in Settings → Secrets and variables → Actions → Variables (repository level, not secret):
 #   SUPABASE_PROJECT_REF   (the id in the project's dashboard address)
@@ -47,6 +49,7 @@ jobs:
       - name: Apply new database migrations
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
           pnpm exec supabase link --project-ref "${{ vars.SUPABASE_PROJECT_REF }}"
           pnpm exec supabase db push
