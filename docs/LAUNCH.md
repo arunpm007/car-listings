@@ -50,7 +50,7 @@ The demo cars in `supabase/seed.sql` only load locally; the hosted database star
 
 Already in `.github/workflows/`:
 
-- **Checks** (`ci.yml`), on every branch push and pull request:
+- **Checks** (`ci.yml`), on every pull request (and each new commit to it):
   - lint, types, unit tests, dependency audit;
   - a fresh Supabase built from the migrations;
   - a production build against it.

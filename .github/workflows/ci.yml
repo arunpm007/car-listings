@@ -1,12 +1,12 @@
-# Every push to a branch and every pull request: lint, types, tests, then a fresh local Supabase from the
-# migrations and a production build against it. Nothing reaches the live site from here.
+# Every pull request: lint, types, tests, then a fresh local Supabase from the migrations and a
+# production build against it. Nothing reaches the live site from here.
 name: Checks
 
 on:
+  # Runs once per pull request (and again on each new commit to it). main is checked as the
+  # first step of Deploy; use "Run workflow" on the Actions tab to check a branch without a PR.
   pull_request:
-  # main is checked as the first step of Deploy.
-  push:
-    branches-ignore: [main]
+  workflow_dispatch:
   workflow_call:
 
 concurrency:
