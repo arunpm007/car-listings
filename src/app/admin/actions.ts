@@ -682,7 +682,14 @@ export async function inviteAdmin(email: string) {
     const { error } = await service.from("admins").upsert({ user_id: existing.id });
     if (error) return { ok: false as const, error: error.message };
     revalidatePath("/admin/settings");
-    return { ok: true as const, message: `${parsed.data} already had an account and is now an admin. They can sign in, or use "Forgot password".` };
+    // An invite can't be sent to an existing account, so send the "choose a password" email
+    // instead: pressing Invite should always put something in their inbox.
+    const { error: mailError } = await service.auth.resetPasswordForEmail(parsed.data);
+    if (mailError) {
+      console.error("password email for existing admin failed", mailError.message);
+      return { ok: true as const, message: `${parsed.data} is now an admin, but the email didn't send. They can use "Forgot password" on the sign-in page.` };
+    }
+    return { ok: true as const, message: `${parsed.data} already had an account, so we emailed them a link to choose a password instead of an invite.` };
   }
 
   const { data, error } = await service.auth.admin.inviteUserByEmail(parsed.data);
